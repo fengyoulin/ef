@@ -1,0 +1,23 @@
+all: prog_i386_poll
+
+linux: prog_i386_poll prog_i386_epoll prog_i386_epollet
+
+solaris: prog_i386_poll prog_i386_port
+
+prog_i386_poll: main.c poll.c framework.c coroutine.c fiber.c i386/fiber.o
+	gcc -g -m32 -std=gnu99 -o prog_i386_poll main.c poll.c framework.c coroutine.c fiber.c i386/fiber.o
+
+prog_i386_epoll: main.c epoll.c framework.c coroutine.c fiber.c i386/fiber.o
+	gcc -g -m32 -std=gnu99 -o prog_i386_epoll main.c epoll.c framework.c coroutine.c fiber.c i386/fiber.o
+
+prog_i386_epollet: main.c epollet.c framework.c coroutine.c fiber.c i386/fiber.o
+	gcc -g -m32 -std=gnu99 -o prog_i386_epollet main.c epollet.c framework.c coroutine.c fiber.c i386/fiber.o
+
+prog_i386_port: main.c port.c framework.c coroutine.c fiber.c i386/fiber.o
+	gcc -g -m32 -std=gnu99 -o prog_i386_port main.c port.c framework.c coroutine.c fiber.c i386/fiber.o
+
+i386/fiber.o: i386/fiber.s
+	as -g --32 -o i386/fiber.o i386/fiber.s
+
+clean:
+	rm -f prog_i386_* i386/fiber.o
