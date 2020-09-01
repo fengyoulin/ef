@@ -77,6 +77,29 @@ exit_proc:
     return ret;
 }
 
+long greeting_proc(int fd, ef_routine_t *er)
+{
+    char resp_ok[] = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 26\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nWelcome to the EFramework!";
+    char buffer[BUFFER_SIZE];
+    ssize_t r = ef_routine_read(er, fd, buffer, BUFFER_SIZE);
+    if(r <= 0)
+    {
+        return r;
+    }
+    r = sizeof(resp_ok) - 1;
+    ssize_t wrt = 0;
+    while(wrt < r)
+    {
+        ssize_t w = ef_routine_write(er, fd, &resp_ok[wrt], r - wrt);
+        if(w < 0)
+        {
+            return w;
+        }
+        wrt += w;
+    }
+    return 0;
+}
+
 void signal_handler(int num)
 {
     efr.stopping = 1;
@@ -108,6 +131,20 @@ int main(int argc, char *argv[])
     }
     listen(sockfd, 512);
     ef_add_listen(&efr, sockfd, forward_proc);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0)
+    {
+        return -1;
+    }
+    addr_in.sin_port = htons(80);
+    retval = bind(sockfd, (const struct sockaddr *)&addr_in, sizeof(addr_in));
+    if(retval < 0)
+    {
+        return -1;
+    }
+    listen(sockfd, 512);
+    ef_add_listen(&efr, sockfd, greeting_proc);
 
     return ef_run_loop(&efr);
 }
