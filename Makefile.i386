@@ -1,23 +1,32 @@
-all: prog_i386_poll
+all: prog_i386_poll clean_tmp
 
-linux: prog_i386_poll prog_i386_epoll prog_i386_epollet
+linux: prog_i386_poll prog_i386_epoll prog_i386_epollet clean_tmp
 
-solaris: prog_i386_poll prog_i386_port
+macos: prog_i386_poll prog_i386_kqueue clean_tmp
 
-prog_i386_poll: main.c poll.c framework.c coroutine.c fiber.c i386/fiber.o
-	gcc -g -m32 -std=gnu99 -o prog_i386_poll main.c poll.c framework.c coroutine.c fiber.c i386/fiber.o
+solaris: prog_i386_poll prog_i386_port clean_tmp
 
-prog_i386_epoll: main.c epoll.c framework.c coroutine.c fiber.c i386/fiber.o
-	gcc -g -m32 -std=gnu99 -o prog_i386_epoll main.c epoll.c framework.c coroutine.c fiber.c i386/fiber.o
+prog_i386_poll: main.c poll.c framework.c coroutine.c fiber.c /tmp/fiber.s
+	gcc -g -m32 -std=gnu99 -o prog_i386_poll main.c poll.c framework.c coroutine.c fiber.c /tmp/fiber.s
 
-prog_i386_epollet: main.c epollet.c framework.c coroutine.c fiber.c i386/fiber.o
-	gcc -g -m32 -std=gnu99 -o prog_i386_epollet main.c epollet.c framework.c coroutine.c fiber.c i386/fiber.o
+prog_i386_kqueue: main.c kqueue.c framework.c coroutine.c fiber.c /tmp/fiber.s
+	gcc -g -m32 -std=gnu99 -o prog_i386_kqueue main.c kqueue.c framework.c coroutine.c fiber.c /tmp/fiber.s
 
-prog_i386_port: main.c port.c framework.c coroutine.c fiber.c i386/fiber.o
-	gcc -g -m32 -std=gnu99 -o prog_i386_port main.c port.c framework.c coroutine.c fiber.c i386/fiber.o
+prog_i386_epoll: main.c epoll.c framework.c coroutine.c fiber.c /tmp/fiber.s
+	gcc -g -m32 -std=gnu99 -o prog_i386_epoll main.c epoll.c framework.c coroutine.c fiber.c /tmp/fiber.s
 
-i386/fiber.o: i386/fiber.s
-	as -g --32 -o i386/fiber.o i386/fiber.s
+prog_i386_epollet: main.c epollet.c framework.c coroutine.c fiber.c /tmp/fiber.s
+	gcc -g -m32 -std=gnu99 -o prog_i386_epollet main.c epollet.c framework.c coroutine.c fiber.c /tmp/fiber.s
+
+prog_i386_port: main.c port.c framework.c coroutine.c fiber.c /tmp/fiber.s
+	gcc -g -m32 -std=gnu99 -o prog_i386_port main.c port.c framework.c coroutine.c fiber.c /tmp/fiber.s
+
+
+/tmp/fiber.s: i386/fiber.s
+	if [[ "$$(uname -a)" =~ "Darwin" ]]; then cat i386/fiber.s | sed 's/ef_fiber_internal_swap/_ef_fiber_internal_swap/g' | sed 's/ef_fiber_internal_init/_ef_fiber_internal_init/g' > /tmp/fiber.s; else cp i386/fiber.s /tmp/fiber.s; fi
+
+clean_tmp:
+	rm /tmp/fiber.s
 
 clean:
-	rm -f prog_i386_* i386/fiber.o
+	rm -rf prog_i386_* /tmp/fiber.s

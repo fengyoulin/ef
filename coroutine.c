@@ -21,9 +21,11 @@
 #include "coroutine.h"
 #include "util/util.h"
 
-void ef_coroutine_pool_init(ef_coroutine_pool_t *pool, size_t stack_size, int limit_min, int limit_max)
+int ef_coroutine_pool_init(ef_coroutine_pool_t *pool, size_t stack_size, int limit_min, int limit_max)
 {
-    ef_fiber_init_sched(&pool->fiber_sched, 1);
+    if (ef_fiber_init_sched(&pool->fiber_sched, 1) < 0) {
+        return -1;
+    }
     pool->stack_size = stack_size;
     pool->limit_min = limit_min;
     pool->limit_max = limit_max;
@@ -32,6 +34,7 @@ void ef_coroutine_pool_init(ef_coroutine_pool_t *pool, size_t stack_size, int li
     pool->full_count = 0;
     pool->free_count = 0;
     pool->run_count = 0;
+    return 0;
 }
 
 ef_coroutine_t *ef_coroutine_create(ef_coroutine_pool_t *pool, size_t header_size, ef_coroutine_proc_t fiber_proc, void *param)

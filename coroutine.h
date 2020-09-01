@@ -110,7 +110,7 @@ typedef ef_fiber_proc_t ef_coroutine_proc_t;
 /*
  * init the pool with stack_size, the min/max number of coroutines
  */
-void ef_coroutine_pool_init(ef_coroutine_pool_t *pool, size_t stack_size, int limit_min, int limit_max);
+int ef_coroutine_pool_init(ef_coroutine_pool_t *pool, size_t stack_size, int limit_min, int limit_max);
 
 /*
  * create a coroutine in the pool and init it, may take one from free_list

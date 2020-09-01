@@ -150,7 +150,7 @@ void ef_fiber_sigsegv_handler(int sig, siginfo_t *info, void *ucontext)
     /*
      * we need core dump if failed to expand fiber stack
      */
-    if (SIGSEGV != sig ||
+    if ((SIGSEGV != sig && SIGBUS != sig) ||
         ef_fiber_expand_stack(ef_fiber_sched->current_fiber, info->si_addr) < 0) {
         raise(SIGABRT);
     }
@@ -162,7 +162,7 @@ int ef_fiber_init_sched(ef_fiber_sched_t *rt, int handle_sigsegv)
     struct sigaction sa = {0};
 
     /*
-     * the global pointer used by sigsegv handler
+     * the global pointer used by SIGSEGV handler
      */
     ef_fiber_sched = rt;
 
@@ -177,22 +177,32 @@ int ef_fiber_init_sched(ef_fiber_sched_t *rt, int handle_sigsegv)
     }
 
     /*
-     * use alt stack, when sigsegv caused by fiber stack, user stack maybe invalid
+     * use alt stack, when SIGSEGV caused by fiber stack, user stack maybe invalid
      */
-    ss.ss_sp = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    ss.ss_sp = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
     if (ss.ss_sp == NULL) {
         return -1;
     }
-    ss.ss_size = 4096;
+    ss.ss_size = SIGSTKSZ;
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) == -1) {
         return -1;
     }
 
     /*
-     * register sigsegv handler for fiber stack expanding
+     * register SIGSEGV handler for fiber stack expanding
      */
     sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
     sa.sa_sigaction = ef_fiber_sigsegv_handler;
-    return sigaction(SIGSEGV, &sa, NULL);
+    if (sigaction(SIGSEGV, &sa, NULL) < 0) {
+        return -1;
+    }
+
+    /*
+     * maybe SIGBUS on macos
+     */
+    if (sigaction(SIGBUS, &sa, NULL) < 0) {
+        return -1;
+    }
+    return 0;
 }

@@ -121,11 +121,13 @@ int ef_init(ef_runtime_t *rt, size_t stack_size, int limit_min, int limit_max, i
     rt->shrink_millisecs = shrink_millisecs;
     rt->count_per_shrink = count_per_shrink;
 
-    ef_coroutine_pool_init(&rt->co_pool, stack_size, limit_min, limit_max);
+    if (ef_coroutine_pool_init(&rt->co_pool, stack_size, limit_min, limit_max) < 0) {
+        return -1;
+    }
     ef_list_init(&rt->listen_list);
     ef_list_init(&rt->free_fd_list);
 
-    return rt->p != NULL;
+    return 0;
 }
 
 int ef_add_listen(ef_runtime_t *rt, int socket, ef_routine_proc_t proc)
@@ -371,7 +373,7 @@ int ef_routine_connect(ef_routine_t *er, int sockfd, const struct sockaddr *addr
         error = EBADF;
         retval = -1;
     } else if (events & EF_POLLOUT) {
-        int len = sizeof(error);
+        socklen_t len = sizeof(error);
         getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len);
     }
 
