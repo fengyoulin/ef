@@ -83,7 +83,7 @@ mov %rax,FIBER_STATUS_OFFSET(%rdi)
 mov %rdi,%rcx
 mov FIBER_STACK_UPPER_OFFSET(%rdi),%rdi
 mov %rcx,-8(%rdi)
-mov $_ef_fiber_exit,%rax
+lea _ef_fiber_exit(%rip),%rax
 mov %rax,-16(%rdi)
 mov %rsi,-24(%rdi)
 xor %rax,%rax

@@ -80,7 +80,7 @@ mov FIBER_STACK_UPPER_OFFSET(%edx),%edx
 mov %ecx,-4(%edx)
 mov 16(%ebp),%eax
 mov %eax,-8(%edx)
-mov $_ef_fiber_exit,%eax
+lea _ef_fiber_exit,%eax
 mov %eax,-12(%edx)
 mov 12(%ebp),%eax
 mov %eax,-16(%edx)
